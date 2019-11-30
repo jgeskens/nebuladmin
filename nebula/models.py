@@ -1,6 +1,7 @@
 from django.db import models
 
 from nebula.backend import generate_network_credentials, generate_member_credentials
+from nebula.deployment import deployment_choices, deployment_dict
 
 
 class StaticHost(models.Model):
@@ -9,7 +10,7 @@ class StaticHost(models.Model):
     port = models.PositiveIntegerField(default=4242)
 
     def __str__(self):
-        return f'{self.static_address}:{self.static_port} {self.name}'
+        return f'{self.address}:{self.port} {self.name}'
 
 
 class Network(models.Model):
@@ -39,6 +40,18 @@ class Network(models.Model):
         super().full_clean(exclude=exclude, validate_unique=validate_unique)
 
 
+class SSHCredentials(models.Model):
+    host = models.CharField(max_length=255)
+    port = models.PositiveIntegerField(default=22)
+    user = models.CharField(max_length=255)
+    password = models.CharField(max_length=255, blank=True)
+    key = models.TextField(blank=True)
+
+    def __str__(self):
+        portarg = '' if self.port == 22 else f' -p {self.port}'
+        return f'{self.user}@{self.host}{portarg}'
+
+
 class Member(models.Model):
     network = models.ForeignKey(Network, on_delete=models.CASCADE, related_name='members')
 
@@ -50,6 +63,9 @@ class Member(models.Model):
     is_lighthouse = models.BooleanField(blank=True, default=False)
     static_host = models.ForeignKey(StaticHost, blank=True, null=True, on_delete=models.SET_NULL)
     nebula_port = models.PositiveIntegerField(default=4242)
+
+    ssh_credentials = models.ForeignKey(SSHCredentials, blank=True, null=True, on_delete=models.SET_NULL)
+    deployment = models.CharField(max_length=100, blank=True, choices=deployment_choices)
 
     def __str__(self):
         return f'{self.address} {self.name}'
@@ -66,3 +82,6 @@ class Member(models.Model):
             self.member_key = ca_data['key']
 
         super().full_clean(exclude=exclude, validate_unique=validate_unique)
+
+    def get_deployment(self):
+        return deployment_dict.get(self.deployment)
