@@ -22,7 +22,7 @@ def generate_config_file(request, member_id):
     return response
 
 
-def deployment_action_view(member_id, template_attr):
+def deployment_action_view(member_id, template_attr, stream=True):
     member = get_object_or_404(Member, pk=member_id)
     context = {'network': member.network, 'member': member}
     if (deployment := member.get_deployment()) is None:
@@ -47,14 +47,14 @@ def deployment_action_view(member_id, template_attr):
     if ssh.user == 'root':
         stdin, stdout, stderr = client.exec_command(
             f'chmod +x /tmp/join_script\n'
-            f'nohup /tmp/join_script </dev/null >/tmp/nebula_deploy_log 2>&1 &\n'
-            f'tail -f /tmp/nebula_deploy_log'
+            f'nohup /tmp/join_script </dev/null >/tmp/nebula_deploy_log 2>&1 &\n' +
+            f'tail -f /tmp/nebula_deploy_log' if stream else ''
         )
     else:
         stdin, stdout, stderr = client.exec_command(
             f'chmod +x /tmp/join_script\n'
-            f'echo \'{ssh.password}\' | nohup sudo -S /tmp/join_script >/tmp/nebula_deploy_log 2>&1 &\n'
-            f'tail -f /tmp/nebula_deploy_log'
+            f'echo \'{ssh.password}\' | nohup sudo -S /tmp/join_script >/tmp/nebula_deploy_log 2>&1 &\n' +
+            f'tail -f /tmp/nebula_deploy_log' if stream else ''
         )
     def read_stdout():
         line = stdout.readline()
@@ -64,9 +64,10 @@ def deployment_action_view(member_id, template_attr):
         if line == 'OK\n':
             yield line
 
-    return StreamingHttpResponse(read_stdout(), content_type='text/plain')
-
-    # return HttpResponse(stdout.read().decode('utf-8') + stderr.read().decode('utf-8'), content_type='text/plain')
+    if stream:
+        return StreamingHttpResponse(read_stdout(), content_type='text/plain')
+    else:
+        return HttpResponse('OK')
 
 
 @staff_member_required

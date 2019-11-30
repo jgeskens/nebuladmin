@@ -3,13 +3,14 @@ import tempfile
 import os
 
 
-def generate_network_credentials(name):
+def generate_network_credentials(name, days=None):
     with tempfile.TemporaryDirectory() as temp_dir:
         p = subprocess.Popen([
             '/go/bin/nebula-cert', 'ca',
             '-name', f'"{name}"',
             '-out-crt', os.path.join(temp_dir, 'ca.crt'),
             '-out-key', os.path.join(temp_dir, 'ca.key'),
+            *(['-duration', f'{days * 24}h'] if days is not None else [])
         ])
         out, err = p.communicate()
 
@@ -21,7 +22,7 @@ def generate_network_credentials(name):
     return {'crt': crt, 'key': key}
 
 
-def generate_member_credentials(name, ip, ca_crt, ca_key):
+def generate_member_credentials(name, ip, ca_crt, ca_key, days=None):
     with tempfile.TemporaryDirectory() as temp_dir:
         with open(os.path.join(temp_dir, 'ca.crt'), 'wb') as ca_crt_fh:
             ca_crt_fh.write(ca_crt.encode('utf-8'))
@@ -36,6 +37,7 @@ def generate_member_credentials(name, ip, ca_crt, ca_key):
             '-ip', f'{ip}',
             '-out-crt', os.path.join(temp_dir, 'member.crt'),
             '-out-key', os.path.join(temp_dir, 'member.key'),
+            *(['-duration', f'{days * 24}h'] if days is not None else [])
         ])
         out, err = p.communicate()
 
