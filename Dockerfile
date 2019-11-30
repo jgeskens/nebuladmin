@@ -6,13 +6,13 @@ RUN apk add --no-cache gettext bash
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONFAULTHANDLER 1
 
-RUN mkdir -p /app/deployment
-
-ADD requirements.txt /app
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN mkdir -p /app
 
 WORKDIR /app
+
+ADD requirements.txt /app/requirements.txt
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN apk add --no-cache --virtual .build-deps build-base linux-headers libffi-dev && \
     apk add --no-cache git postgresql-dev jpeg-dev zlib-dev freetype-dev && \
@@ -58,12 +58,10 @@ RUN cd /tmp && \
     make bin-linux && \
     make install
 
-ADD . /app
-
-WORKDIR /app
+COPY . /app
 
 EXPOSE 8000
 
-# ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD python manage.py runserver 0.0.0.0:8000

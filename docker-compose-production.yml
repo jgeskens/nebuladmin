@@ -1,0 +1,14 @@
+version: "2"
+services:
+  app:
+    image: jgeskens/nebuladmin:latest
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./db:/var/db
+    environment:
+      - DEBUG=FALSE
+      - ALLOWED_HOSTS=example.com,www.example.com,localhost
+      - DATABASE_URL=sqlite:////var/db/nebula.db
+    command: gunicorn -w 4 nebuladmin.wsgi -b :8000 --log-file=-

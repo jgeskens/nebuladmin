@@ -18,6 +18,8 @@ from django.urls import path, include
 
 import nebula.urls
 
+admin.site.site_header = 'nebuladmin'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('nebula/', include(nebula.urls))
