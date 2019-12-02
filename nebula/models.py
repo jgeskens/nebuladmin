@@ -81,7 +81,7 @@ class Member(models.Model):
                 f'{self.address}/{self.network.cidr_bits}',
                 self.network.ca_crt,
                 self.network.ca_key,
-                days=None if self.expiry_date is None else (self.expiry_date - now()).days
+                days=None if self.expiry_date is None else (self.expiry_date - now().date()).days
             )
             self.member_crt = ca_data['crt']
             self.member_key = ca_data['key']
