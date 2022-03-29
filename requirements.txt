@@ -2,5 +2,5 @@ Django==2.2.8
 psycopg2-binary==2.8.4
 django-environ==0.4.5
 gunicorn==20.0.3
-paramiko==2.6.0
+paramiko==2.10.1
 whitenoise==4.1.4
